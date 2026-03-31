@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appendToGoogleSheet } from "@/lib/google-sheets";
+import { appendToGoogleSheet, checkIfPhoneExists } from "@/lib/google-sheets";
 
 export const runtime = "nodejs";
 
@@ -39,9 +39,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Phone must be a valid 10-digit Indian number" }, { status: 400 });
     }
 
+    // 3. Duplicate check using Google Sheets
+    const isDuplicate = await checkIfPhoneExists(phone);
+    if (isDuplicate) {
+      return NextResponse.json(
+        { success: false, message: "This number is already registered / हा नंबर आधीच नोंदणीकृत आहे" },
+        { status: 409 }
+      );
+    }
+
     const createdAt = new Date().toISOString();
 
-    // 3. Google Sheets Sync
+    // 4. Google Sheets Sync
     await appendToGoogleSheet(name, phone, createdAt);
 
     return NextResponse.json({ success: true }, { status: 200 });

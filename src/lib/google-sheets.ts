@@ -44,3 +44,42 @@ export async function appendToGoogleSheet(name: string, phone: string, createdAt
     console.error("[Google Sheets API Error] Failed to append row:", error);
   }
 }
+
+/**
+ * Checks if a phone number already exists in Column B of the Google Sheet.
+ */
+export async function checkIfPhoneExists(phone: string): Promise<boolean> {
+  try {
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    
+    if (!spreadsheetId || !process.env.GOOGLE_CLIENT_EMAIL || !privateKey) {
+      return false; // Skip check if misconfigured
+    }
+
+    // Read column B (Phone numbers)
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: "Sheet1!B:B",
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      return false;
+    }
+
+    // Check if the exact phone number already exists in the column
+    // The phone parameter is fully normalized using normalizePhone before this is called
+    return rows.some((row) => {
+      const cellValue = row[0]?.toString() || "";
+      // Strip non-digits from the cell value to compare accurately
+      const cleanCell = cellValue.replace(/\D/g, "");
+      // If the clean cell matches the phone exactly (or matches without 91 prefix)
+      return cleanCell === phone || (cleanCell.length === 12 && cleanCell.startsWith("91") && cleanCell.slice(2) === phone);
+    });
+
+  } catch (error) {
+    console.error("[Google Sheets API Error] Failed to check duplicates:", error);
+    // If we fail to read, we return false so we don't block potentially valid submissions.
+    return false;
+  }
+}
