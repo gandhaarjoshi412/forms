@@ -107,6 +107,19 @@ export default function LeadForm() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        // Non-blocking webhook call - only runs if not a duplicate
+        fetch("https://n8n.platesight.in/webhook/sendMSG", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.NEXT_PUBLIC_N8N_API_KEY || "",
+          },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            phone: formData.whatsapp,
+          }),
+        }).catch((err) => console.error("Webhook error:", err));
+
         setStatus("success");
       } else {
         setStatus("error");
