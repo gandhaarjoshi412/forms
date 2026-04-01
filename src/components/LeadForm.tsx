@@ -112,7 +112,7 @@ export default function LeadForm() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": process.env.NEXT_PUBLIC_N8N_API_KEY || "",
+            "x-api-key": process.env.NEXT_PUBLIC_N8N_API || "",
           },
           body: JSON.stringify({
             name: formData.name.trim(),
