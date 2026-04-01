@@ -53,6 +53,16 @@ export async function POST(request: NextRequest) {
     // 4. Google Sheets Sync
     await appendToGoogleSheet(name, phone, createdAt);
 
+    // 5. Trigger n8n Webhook - Fire and forget
+    fetch("https://n8n.platesight.in/webhook/sendMSG", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.NEXT_PUBLIC_N8N_API || "",
+      },
+      body: JSON.stringify({ name, phone }),
+    }).catch((err) => console.error("Webhook error:", err));
+
     return NextResponse.json({ success: true }, { status: 200 });
 
   } catch (error) {
